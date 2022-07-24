@@ -1,0 +1,119 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Test</title>
+
+    <script src="lib/barcode_detector.js" type="module"></script>
+
+    <style>
+      html, body {
+        margin : 0;
+        padding : 0;
+      }
+
+      * {
+        box-sizing : border-box;
+      }
+
+
+      body > div {
+        position : relative;
+        overflow : hidden;
+        width    : fit-content;
+      }
+
+      body > div > div {
+        position         : absolute;
+        background       : rgba(255, 255, 255, 0.0);
+        border           : solid 10px rgba(0, 0, 0, 0);
+        transform-origin : top left;
+        box-shadow       : 0px 0px 0px 100vmax rgba(0, 0, 0, 0.5);
+        opacity          : 0;
+      }
+
+      body > div > div[data-found] {
+        opacity          : 1;
+      }
+
+      body > div > div[data-text]::after {
+        content       : attr(data-text);
+        display       : block;
+        margin        : auto;
+        bottom        : 0;
+        left          : 0;
+        right         : 0;
+        padding       : 5px;
+        background    : rgba(0,0,0,0.25);
+        color         : white;
+        overflow      : hidden;
+        border-radius : 5px;
+        font-family   : Arial;
+        width         : fit-content;
+        max-width     : calc(100% - 20px);
+      }
+
+    </style>
+  </head>
+
+  <body>
+    
+    <div>
+      <video></video>
+      <div id="rect"></div>
+    </div>
+    <span id="out"></span>
+
+  </body>
+
+  <script>
+      
+    // debug ---
+
+    function startTest() {
+      let d     = document.querySelector('#rect'), 
+        out   = document.querySelector('#out'),
+        tid   = null,
+        scans = 0,
+        bc    = new BarcodeDetector(), e;
+
+      bc.detectFromCamera(document.querySelector('video')).then(async (stream) => {
+
+        while ({ done, value } = await stream.read()) {
+          let result = value, r;
+
+          if (done) break;
+
+          if (result.length > 0 && result[0].rawValue) {
+            d.setAttribute('data-text',  result[0].rawValue);
+            
+            r = result[0];
+
+            out.innerHTML = '[' + result._decoder +  ' / '+ result._decodeDuration +'ms] ' + '<br>' + result.map(e => e.rawValue + '<br>');
+
+            if (tid) {
+              clearTimeout(tid);
+
+              tid = null;
+            }
+
+            d.setAttribute('data-found', '');
+
+            d.style.left      = Math.round(r.x)      + 'px';
+            d.style.top       = Math.round(r.y)      + 'px';
+            d.style.width     = Math.round(r.width)  + 'px';
+            d.style.height    = Math.round(r.height) + 'px';
+            d.style.transform = 'rotate(' + Math.round(r.angle / Math.PI * 180) + 'deg)';
+
+          } else if (d.hasAttribute('data-found') && !tid) {
+            tid = setTimeout(() => d.removeAttribute('data-found'), 1000);
+          }
+        }
+        
+      });
+    }
+
+    window.setTimeout(startTest, 1000);
+
+  </script>
+
+</html>
