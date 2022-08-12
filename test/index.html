@@ -69,47 +69,40 @@
       
     // debug ---
 
-    function startTest() {
+    async function startTest() {
       let d     = document.querySelector('#rect'), 
         out   = document.querySelector('#out'),
         tid   = null,
         scans = 0,
         bc    = new BarcodeDetector(), e;
 
-      bc.detectFromCamera(document.querySelector('video')).then(async (stream) => {
+      for await (let result of bc.detectFromCamera(document.querySelector('video'))) {
 
-        while ({ done, value } = await stream.read()) {
-          let result = value, r;
+        if (result.length > 0 && result[0].rawValue) {
+          d.setAttribute('data-text',  result[0].rawValue);
+          
+          r = result[0];
 
-          if (done) break;
+          out.innerHTML = '[' + result._decoder +  ' / '+ result._decodeDuration +'ms] ' + '<br>' + result.map(e => e.rawValue + '<br>');
 
-          if (result.length > 0 && result[0].rawValue) {
-            d.setAttribute('data-text',  result[0].rawValue);
-            
-            r = result[0];
+          if (tid) {
+            clearTimeout(tid);
 
-            out.innerHTML = '[' + result._decoder +  ' / '+ result._decodeDuration +'ms] ' + '<br>' + result.map(e => e.rawValue + '<br>');
-
-            if (tid) {
-              clearTimeout(tid);
-
-              tid = null;
-            }
-
-            d.setAttribute('data-found', '');
-
-            d.style.left      = Math.round(r.x)      + 'px';
-            d.style.top       = Math.round(r.y)      + 'px';
-            d.style.width     = Math.round(r.width)  + 'px';
-            d.style.height    = Math.round(r.height) + 'px';
-            d.style.transform = 'rotate(' + Math.round(r.angle / Math.PI * 180) + 'deg)';
-
-          } else if (d.hasAttribute('data-found') && !tid) {
-            tid = setTimeout(() => d.removeAttribute('data-found'), 1000);
+            tid = null;
           }
-        }
-        
-      });
+
+          d.setAttribute('data-found', '');
+
+          d.style.left      = Math.round(r.x)      + 'px';
+          d.style.top       = Math.round(r.y)      + 'px';
+          d.style.width     = Math.round(r.width)  + 'px';
+          d.style.height    = Math.round(r.height) + 'px';
+          d.style.transform = 'rotate(' + Math.round(r.angle / Math.PI * 180) + 'deg)';
+
+        } else if (d.hasAttribute('data-found') && !tid) {
+          tid = setTimeout(() => d.removeAttribute('data-found'), 1000);
+        }        
+      }
     }
 
     window.setTimeout(startTest, 1000);
