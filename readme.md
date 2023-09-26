@@ -4,6 +4,8 @@ This library adds an abstraction above the original [`BarcodeDetector`](https://
 
 ## Example
 
+Demo: https://kevinblt.github.io/barcode_detector/test/
+
 Include the library `lib/barcode_detector.js` as a script, so
 that it runs before any code using `BarcodeDetector`.
 
