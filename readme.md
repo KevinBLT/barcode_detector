@@ -8,35 +8,38 @@ Demo: https://kevinblt.github.io/barcode_detector/test/
 
 Include the library `lib/barcode_detector.js` as a script, so
 that it runs before any code using `BarcodeDetector`.
+Please import it as a module are use `<script type="module">`.
+
+The original BarcodeDetector class will be overriden and a worker will
+be used in the background. The worker itself will use the original API
+or use ZXING with wasm. Either will run in the worker and free the main thread.
 
 ```javascript
-let barcodeDetector  = new BarcodeDetector();
-let detectedTexts    = await barcodeDetector.detect(document.querySelector('img'));
+const barcodeDetector = new BarcodeDetector();
+const detectedTexts   = await barcodeDetector.detect(document.querySelector('img'));
 
 for (let e of detectedTexts) {
   console.log(e.rawValue);
 }
 ```
 
-There are some additions to the original API.
-
-See the following:
+There are some additions to the original API, like the following:
 
 ```javascript
+const barcodeDetector = new BarcodeDetector();
 
-// Get an async iterator detecting from camera stream
-barcodeDetector.detectFromCamera(videoElement, scansPerSecondLimit = 0); 
+// Get an async iterator detecting from camera stream (this is not included in the official version)
+for await (const e of barcodeDetector.detectFromCamera(document.querySelector('video'))) {
 
-barcodeDetector.minSize; // The min size used for images, scaled up   if needed
-barcodeDetector.maxSize; // The min size used for images, scaled down if exceeded
+  // The following properties art only in this version and contain additional information
+  console.log(e._decodeDuration);  // The duration of the decoding in ms
+  console.log(e._decoder);         // 'native' | 'zxing'
 
-console.log(e._decodeDuration);  // The duration of the decoding in ms
-console.log(e._decoder);         // 'native' | 'zxing'
+  for (const d of e.detectedTexts) {
+    console.log(e.rawValue);
+  }
 
-for (let e of detectedTexts) {
-  console.log(e.angle); // The angle of the rect
 }
-
 ```
 
 
